@@ -15,16 +15,12 @@ export class NiconicoVideoClient extends BaseNiconicoClient {
       `[NiconicoVideoClient] 動画データ取得 page=${page}, pageSize=${pageSize} for user: ${userId}`
     );
 
-    const response = await this.request<NiconicoVideoApiResponse>('/users/me/videos', {
+    const response = await this.get<NiconicoVideoApiResponse>('/users/me/videos', {
       sortKey: 'registeredAt',
       sortOrder: 'desc',
       pageSize,
       page,
     });
-
-    if (response.meta.status !== 200) {
-      throw new Error(`API応答エラー: status=${response.meta.status}`);
-    }
 
     const { items, totalCount } = response.data;
     const totalPages = Math.ceil(totalCount / pageSize);

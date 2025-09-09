@@ -28,16 +28,12 @@ export class NiconicoIncomeClient extends BaseNiconicoClient {
       `[NiconicoIncomeClient] 収益データ取得: ${year}年${month}月, offset=${offset}, limit=${limit} for user: ${userId}`
     );
 
-    const response = await this.request<NiconicoIncomeApiResponse>(apiUrl, {
+    const response = await this.get<NiconicoIncomeApiResponse>(apiUrl, {
       _offset: offset,
       _limit: limit,
       _sort: '-createdAt',
       with_filter: 0,
     });
-
-    if (response.meta.status !== 200) {
-      throw new Error(`API応答エラー: status=${response.meta.status}`);
-    }
 
     const { contents, total } = response.data;
     const hasMore = offset + limit < total && contents.length > 0;
@@ -100,15 +96,11 @@ export class NiconicoIncomeClient extends BaseNiconicoClient {
       `[NiconicoIncomeClient] 収益履歴データ取得: ${year}/${month}, offset=${offset}, limit=${limit} for user: ${userId}`
     );
 
-    const response = await this.request<NiconicoMonthlyHistoryApiResponse>(apiUrl, {
+    const response = await this.get<NiconicoMonthlyHistoryApiResponse>(apiUrl, {
       _offset: offset,
       _limit: limit,
       _sort: '-score.thisMonth.allTotal',
     });
-
-    if (response.meta.status !== 200) {
-      throw new Error(`API応答エラー: status=${response.meta.status}`);
-    }
 
     const { contents, total } = response.data;
     const hasMore = contents.length > 0 && offset + limit < total;
@@ -150,31 +142,51 @@ export class NiconicoIncomeClient extends BaseNiconicoClient {
     const baseApiUrl = 'https://public-api.commons.nicovideo.jp/v1/my/cpp/forecasts';
     const totalApiUrl = `${baseApiUrl}/total/${year}/${month}`;
 
-    const response = await this.request<NiconicoIncomeTotalResponse>(totalApiUrl, {
-      _limit: 1,
-    }).catch((error) => {
-      if (error?.response?.status === 409) {
-        console.log(`集計中エラー詳細: ${JSON.stringify(error.response.data)}`);
-        return { meta: { status: 409 }, data: error.response.data };
+    try {
+      const response = await this.requestWithSpecialHandling<NiconicoIncomeTotalResponse>(
+        totalApiUrl,
+        {
+          method: 'GET',
+          params: { _limit: 1 },
+        }
+      );
+
+      // 手動でステータスチェック（409も含めて）
+      if (this.hasMetaStatus(response)) {
+        console.log(
+          `収益データ利用可能性チェック ${year}年${month}月: ステータス ${response.meta.status}`
+        );
+
+        if (response.meta.status === 200) {
+          return true;
+        }
+
+        if (response.meta.status === 409) {
+          console.log(`集計中エラー詳細: ${JSON.stringify(response.data)}`);
+          return false;
+        }
+
+        console.warn(`予期しないステータスコード: ${response.meta.status}, 利用可能として扱います`);
+        return true;
       }
-      throw error;
-    });
 
-    console.log(
-      `収益データ利用可能性チェック ${year}年${month}月: ステータス ${response.meta.status}`
-    );
-
-    if (response.meta.status === 200) {
+      // metaプロパティがない場合は利用可能として扱う
       return true;
-    }
-
-    if (response.meta.status === 409) {
-      console.log(`集計中エラー詳細: ${JSON.stringify(response.data)}`);
+    } catch {
+      // ネットワークエラーなど、その他のエラーは処理できないため利用不可として扱う
       return false;
     }
+  }
 
-    console.warn(`予期しないステータスコード: ${response.meta.status}, 利用可能として扱います`);
-    return true;
+  private hasMetaStatus(data: unknown): data is { meta: { status: number } } {
+    return (
+      typeof data === 'object' &&
+      data !== null &&
+      'meta' in data &&
+      typeof (data as { meta: unknown }).meta === 'object' &&
+      (data as { meta: unknown }).meta !== null &&
+      'status' in (data as { meta: { status: unknown } }).meta
+    );
   }
 
   private getPreviousMonth(year: number, month: number): { year: number; month: number } {

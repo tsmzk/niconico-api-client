@@ -1,7 +1,7 @@
 // メインAPIクライアント (ファサードパターン)
 
 // 個別APIクライアント (直接使用したい場合)
-export type { BaseNiconicoClientConfig } from './clients/BaseNiconicoClient';
+export type { BaseNiconicoClientConfig, NiconicoApiResponse } from './clients/BaseNiconicoClient';
 export { BaseNiconicoClient } from './clients/BaseNiconicoClient';
 export { NiconicoAnalyticsClient } from './clients/NiconicoAnalyticsClient';
 export { NiconicoIncomeClient } from './clients/NiconicoIncomeClient';

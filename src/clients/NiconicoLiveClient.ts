@@ -29,14 +29,10 @@ export class NiconicoLiveClient extends BaseNiconicoClient {
       withTotalCount: true,
     };
 
-    const response = await this.request<NiconicoLiveBroadcastApiResponse>(
+    const response = await this.get<NiconicoLiveBroadcastApiResponse>(
       'https://live.nicovideo.jp/front/api/v2/user-broadcast-history',
       apiParams
     );
-
-    if (response.meta.status !== 200) {
-      throw new Error(`API応答エラー: status=${response.meta.status}`);
-    }
 
     const { programsList, totalCount } = response.data;
     const hasMore = !response.data.hasNext === false && offset + limit < totalCount;

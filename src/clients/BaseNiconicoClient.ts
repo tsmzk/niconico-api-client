@@ -17,6 +17,15 @@ export interface BaseNiconicoClientConfig {
   requestInterval?: number;
 }
 
+export interface NiconicoApiResponse<T = unknown> {
+  meta: {
+    status: number;
+    errorCode?: string;
+    errorMessage?: string;
+  };
+  data: T;
+}
+
 export abstract class BaseNiconicoClient {
   protected readonly axios: AxiosInstance;
   protected readonly baseURL = 'https://nvapi.nicovideo.jp/v2';
@@ -46,19 +55,38 @@ export abstract class BaseNiconicoClient {
     this.setupInterceptors();
   }
 
-  protected async request<T>(url: string, params?: Record<string, unknown>): Promise<T> {
+  protected async request<T>(
+    url: string,
+    options?: {
+      method?: 'GET' | 'POST' | 'DELETE';
+      params?: Record<string, unknown>;
+      data?: unknown;
+      additionalHeaders?: Record<string, string>;
+      skipStatusCheck?: boolean;
+    }
+  ): Promise<T> {
+    const {
+      method = 'GET',
+      params,
+      data,
+      additionalHeaders = {},
+      skipStatusCheck = false,
+    } = options || {};
+
     await this.enforceRateLimit();
 
     const cookieHeader = this.buildCookieHeader();
     const headers = {
       Cookie: cookieHeader,
+      ...additionalHeaders,
     };
 
     const isAbsoluteUrl = url.startsWith('http');
     const requestConfig: AxiosRequestConfig = {
-      method: 'GET',
+      method,
       url: isAbsoluteUrl ? url : `${this.baseURL}${url}`,
       params,
+      data,
       headers,
       withCredentials: true,
     };
@@ -71,10 +99,81 @@ export abstract class BaseNiconicoClient {
     if (requestConfig.params && Object.keys(requestConfig.params).length > 0) {
       console.log(`[BaseNiconicoClient] パラメータ:`, requestConfig.params);
     }
+    if (requestConfig.data) {
+      console.log(`[BaseNiconicoClient] データ:`, requestConfig.data);
+    }
 
     const response = await this.axios.request<T>(requestConfig);
     console.log('[BaseNiconicoClient] レスポンス成功 - ステータス:', response.status);
+
+    // 自動ステータスチェック
+    if (!skipStatusCheck && this.hasMetaProperty(response.data)) {
+      this.checkMetaStatus(response.data.meta);
+    }
+
     return response.data;
+  }
+
+  // 型安全性を向上させた便利メソッド（データ部分を自動抽出）
+  protected async get<T>(url: string, params?: Record<string, unknown>): Promise<T> {
+    const response = await this.request<NiconicoApiResponse<T>>(url, { method: 'GET', params });
+    return response.data;
+  }
+
+  protected async post<T>(
+    url: string,
+    data?: unknown,
+    additionalHeaders?: Record<string, string>
+  ): Promise<T> {
+    const response = await this.request<NiconicoApiResponse<T>>(url, {
+      method: 'POST',
+      data,
+      additionalHeaders,
+    });
+    return response.data;
+  }
+
+  protected async delete<T>(
+    url: string,
+    params?: Record<string, unknown>,
+    additionalHeaders?: Record<string, string>
+  ): Promise<T> {
+    const response = await this.request<NiconicoApiResponse<T>>(url, {
+      method: 'DELETE',
+      params,
+      additionalHeaders,
+    });
+    return response.data;
+  }
+
+  // 特殊ケース対応用のメソッド
+  protected async requestWithSpecialHandling<T>(
+    url: string,
+    options?: {
+      method?: 'GET' | 'POST' | 'DELETE';
+      params?: Record<string, unknown>;
+      data?: unknown;
+      additionalHeaders?: Record<string, string>;
+    }
+  ): Promise<T> {
+    return this.request<T>(url, { ...options, skipStatusCheck: true });
+  }
+
+  private hasMetaProperty(data: unknown): data is { meta: { status: number } } {
+    return (
+      typeof data === 'object' &&
+      data !== null &&
+      'meta' in data &&
+      typeof (data as { meta: unknown }).meta === 'object' &&
+      (data as { meta: unknown }).meta !== null &&
+      'status' in (data as { meta: { status: unknown } }).meta
+    );
+  }
+
+  private checkMetaStatus(meta: { status: number }): void {
+    if (meta.status !== 200) {
+      throw new Error(`Niconico API エラー: status=${meta.status}`);
+    }
   }
 
   private setupInterceptors(): void {

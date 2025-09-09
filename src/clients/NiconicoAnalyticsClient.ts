@@ -26,11 +26,7 @@ export class NiconicoAnalyticsClient extends BaseNiconicoClient {
       dimensions: 'date',
     };
 
-    const response = await this.request<NiconicoAnalyticsStatsApiResponse>(url, params);
-
-    if (response.meta.status !== 200) {
-      throw new Error(`API応答エラー: status=${response.meta.status}`);
-    }
+    const response = await this.get<NiconicoAnalyticsStatsApiResponse>(url, params);
 
     const stats: NiconicoAnalyticsStatsResponse[] = response.data.map((item) => {
       const date = item.dimensions.find((d) => d.type === 'date')?.label;

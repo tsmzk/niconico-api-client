@@ -13,14 +13,10 @@ export class NiconicoMylistClient extends BaseNiconicoClient {
   }> {
     console.log(`[NiconicoMylistClient] マイリスト一覧取得 sampleItemCount=${sampleItemCount}`);
 
-    const response = await this.request<NiconicoMylistsApiResponse>(
+    const response = await this.get<NiconicoMylistsApiResponse>(
       'https://nvapi.nicovideo.jp/v1/users/me/mylists',
       { sampleItemCount }
     );
-
-    if (response.meta.status !== 200) {
-      throw new Error(`API応答エラー: status=${response.meta.status}`);
-    }
 
     const { mylists } = response.data;
 
@@ -40,14 +36,10 @@ export class NiconicoMylistClient extends BaseNiconicoClient {
       `[NiconicoMylistClient] マイリスト詳細取得 mylistId=${mylistId}, page=${page}, pageSize=${pageSize}`
     );
 
-    const response = await this.request<NiconicoMylistDetailApiResponse>(
+    const response = await this.get<NiconicoMylistDetailApiResponse>(
       `https://nvapi.nicovideo.jp/v1/users/me/mylists/${mylistId}`,
       { page, pageSize }
     );
-
-    if (response.meta.status !== 200) {
-      throw new Error(`API応答エラー: status=${response.meta.status}`);
-    }
 
     const { mylist } = response.data;
 
@@ -59,11 +51,6 @@ export class NiconicoMylistClient extends BaseNiconicoClient {
   }
 
   async addToMylist(mylistId: string, videoIds: string[]): Promise<void> {
-    const cookieHeader = this.buildCookieHeader();
-    const headers = {
-      Cookie: cookieHeader,
-    };
-
     for (const videoId of videoIds) {
       console.log(
         `[NiconicoMylistClient] マイリストに動画追加 mylistId=${mylistId}, videoId=${videoId}`
@@ -71,16 +58,7 @@ export class NiconicoMylistClient extends BaseNiconicoClient {
 
       const url = `https://nvapi.nicovideo.jp/v1/users/me/mylists/${mylistId}/items?itemId=${videoId}`;
 
-      await this.enforceRateLimit();
-
-      const _response = await this.axios.post<NiconicoMylistOperationApiResponse>(
-        url,
-        {},
-        {
-          headers,
-          withCredentials: true,
-        }
-      );
+      await this.post<NiconicoMylistOperationApiResponse>(url, {});
 
       console.log(`[NiconicoMylistClient] 動画 ${videoId} をマイリストに追加しました`);
     }
@@ -93,19 +71,9 @@ export class NiconicoMylistClient extends BaseNiconicoClient {
       `[NiconicoMylistClient] マイリストから動画削除 mylistId=${mylistId}, itemIds=${itemIdsStr}`
     );
 
-    const url = `https://nvapi.nicovideo.jp/v1/users/me/mylists/${mylistId}/items?itemIds=${itemIdsStr}`;
+    const url = `https://nvapi.nicovideo.jp/v1/users/me/mylists/${mylistId}/items`;
 
-    await this.enforceRateLimit();
-
-    const cookieHeader = this.buildCookieHeader();
-    const headers = {
-      Cookie: cookieHeader,
-    };
-
-    const _response = await this.axios.delete<NiconicoMylistOperationApiResponse>(url, {
-      headers,
-      withCredentials: true,
-    });
+    await this.delete<NiconicoMylistOperationApiResponse>(url, { itemIds: itemIdsStr });
 
     console.log(`[NiconicoMylistClient] アイテム ${itemIdsStr} をマイリストから削除しました`);
   }
