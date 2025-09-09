@@ -1,35 +1,35 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig } from 'axios';
 import dayjs from 'dayjs';
 import type { Redis } from 'ioredis';
-import type { INiconicoApiClient } from '@/domain/external/niconico/INiconicoApiClient';
+import type { INiconicoApiClient } from './INiconicoApiClient';
 import type {
   NiconicoAnalyticsStatsApiResponse,
   NiconicoAnalyticsStatsResponse,
-} from '@/domain/external/niconico/NiconicoAnalyticsStatsApiTypes';
+} from './types/NiconicoAnalyticsStatsApiTypes';
 import type {
   NiconicoIncomeApiResponse,
   NiconicoIncomeContent,
   NiconicoIncomeTotalResponse,
-} from '@/domain/external/niconico/NiconicoIncomeApiTypes';
+} from './types/NiconicoIncomeApiTypes';
 import type {
   NiconicoLiveBroadcastApiResponse,
   NiconicoLiveProgramData,
-} from '@/domain/external/niconico/NiconicoLiveApiTypes';
+} from './types/NiconicoLiveApiTypes';
 import type {
   NiconicoMonthlyHistoryApiResponse,
   NiconicoMonthlyHistoryItem,
-} from '@/domain/external/niconico/NiconicoMonthlyHistoryApiTypes';
+} from './types/NiconicoMonthlyHistoryApiTypes';
 import type {
   NiconicoMylist,
   NiconicoMylistDetail,
   NiconicoMylistDetailApiResponse,
   NiconicoMylistOperationApiResponse,
   NiconicoMylistsApiResponse,
-} from '@/domain/external/niconico/NiconicoMylistApiTypes';
+} from './types/NiconicoMylistApiTypes';
 import type {
   NiconicoVideoApiResponse,
   NiconicoVideoItem,
-} from '@/domain/external/niconico/NiconicoVideoApiTypes';
+} from './types/NiconicoVideoApiTypes';
 
 /**
  * ニコニコクッキーの型

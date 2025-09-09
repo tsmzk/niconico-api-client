@@ -1,9 +1,9 @@
-import type { NiconicoAnalyticsStatsResponse } from './NiconicoAnalyticsStatsApiTypes';
-import type { NiconicoIncomeContent } from './NiconicoIncomeApiTypes';
-import type { NiconicoLiveProgramData } from './NiconicoLiveApiTypes';
-import type { NiconicoMonthlyHistoryItem } from './NiconicoMonthlyHistoryApiTypes';
-import type { NiconicoMylist, NiconicoMylistDetail } from './NiconicoMylistApiTypes';
-import type { NiconicoVideoItem } from './NiconicoVideoApiTypes';
+import type { NiconicoAnalyticsStatsResponse } from './types/NiconicoAnalyticsStatsApiTypes';
+import type { NiconicoIncomeContent } from './types/NiconicoIncomeApiTypes';
+import type { NiconicoLiveProgramData } from './types/NiconicoLiveApiTypes';
+import type { NiconicoMonthlyHistoryItem } from './types/NiconicoMonthlyHistoryApiTypes';
+import type { NiconicoMylist, NiconicoMylistDetail } from './types/NiconicoMylistApiTypes';
+import type { NiconicoVideoItem } from './types/NiconicoVideoApiTypes';
 
 /**
  * ニコニコAPIクライアントインターフェース

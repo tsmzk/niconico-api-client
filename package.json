@@ -1,7 +1,7 @@
 {
   "name": "niconico-api-client",
-  "version": "0.0.1",
-  "description": "",
+  "version": "1.0.0",
+  "description": "TypeScript client library for Niconico API",
   "homepage": "https://github.com/tsmzk/niconico-api-client#readme",
   "bugs": {
     "url": "https://github.com/tsmzk/niconico-api-client/issues"
@@ -13,8 +13,34 @@
   "license": "ISC",
   "author": "",
   "type": "commonjs",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "prepublish": "npm run clean && npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
-  }
+  },
+  "dependencies": {
+    "axios": "^1.6.2",
+    "dayjs": "^1.11.10"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  },
+  "peerDependencies": {
+    "ioredis": "^5.0.0"
+  },
+  "keywords": [
+    "niconico",
+    "api",
+    "client",
+    "typescript",
+    "nicovideo"
+  ]
 }
