@@ -23,13 +23,15 @@
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
     "prepublish": "npm run clean && npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "check": "biome check --write src/"
   },
   "dependencies": {
     "axios": "^1.6.2",
     "dayjs": "^1.11.10"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.2.3",
     "@types/node": "^20.10.0",
     "typescript": "^5.3.0"
   },

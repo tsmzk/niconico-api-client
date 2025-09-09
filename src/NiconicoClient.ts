@@ -24,10 +24,7 @@ import type {
   NiconicoMylistOperationApiResponse,
   NiconicoMylistsApiResponse,
 } from './types/NiconicoMylistApiTypes';
-import type {
-  NiconicoVideoApiResponse,
-  NiconicoVideoItem,
-} from './types/NiconicoVideoApiTypes';
+import type { NiconicoVideoApiResponse, NiconicoVideoItem } from './types/NiconicoVideoApiTypes';
 
 /**
  * ニコニコクッキーの型
@@ -54,14 +51,14 @@ export interface NiconicoClientConfig {
 
 /**
  * ニコニコAPIクライアント（ファサードパターン）
- * 
+ *
  * 使用例:
  * ```typescript
  * const client = new NiconicoClient({
  *   cookies: cookiesArray,
  *   userId: 'your-user-id'
  * });
- * 
+ *
  * const videos = await client.fetchVideos('userId', 1, 10);
  * ```
  */
@@ -101,14 +98,14 @@ export class NiconicoClient {
     userId: string,
     cookiesId: string,
     page: number,
-    pageSize: number,
+    pageSize: number
   ): Promise<{
     items: NiconicoVideoItem[];
     totalCount: number;
     hasMore: boolean;
   }> {
     console.log(
-      `[NiconicoClient] 動画データ取得 page=${page}, pageSize=${pageSize} for user: ${userId}`,
+      `[NiconicoClient] 動画データ取得 page=${page}, pageSize=${pageSize} for user: ${userId}`
     );
 
     const response = await this.request<NiconicoVideoApiResponse>('/users/me/videos', {
@@ -142,16 +139,16 @@ export class NiconicoClient {
     userId: string,
     cookiesId: string,
     offset: number,
-    limit: number,
+    limit: number
   ): Promise<{
     programsList: NiconicoLiveProgramData[];
     totalCount: number;
     hasMore: boolean;
   }> {
     const actualUserId = this.userId || userId;
-    
+
     console.log(
-      `[NiconicoClient] 生放送データ取得 offset=${offset}, limit=${limit} for user: ${userId}`,
+      `[NiconicoClient] 生放送データ取得 offset=${offset}, limit=${limit} for user: ${userId}`
     );
 
     const apiParams = {
@@ -165,7 +162,7 @@ export class NiconicoClient {
 
     const response = await this.request<NiconicoLiveBroadcastApiResponse>(
       'https://live.nicovideo.jp/front/api/v2/user-broadcast-history',
-      apiParams,
+      apiParams
     );
 
     if (response.meta.status !== 200) {
@@ -176,7 +173,7 @@ export class NiconicoClient {
     const hasMore = !response.data.hasNext === false && offset + limit < totalCount;
 
     console.log(
-      `[NiconicoClient] offset=${offset}: ${programsList.length}件取得 (全${totalCount}件中)`,
+      `[NiconicoClient] offset=${offset}: ${programsList.length}件取得 (全${totalCount}件中)`
     );
 
     return {
@@ -193,7 +190,7 @@ export class NiconicoClient {
     userId: string,
     cookiesId: string,
     offset: number,
-    limit: number,
+    limit: number
   ): Promise<{
     contents: NiconicoIncomeContent[];
     totalCount: number;
@@ -204,7 +201,7 @@ export class NiconicoClient {
     const apiUrl = `${baseApiUrl}/${year}/${month}`;
 
     console.log(
-      `[NiconicoClient] 収益データ取得: ${year}年${month}月, offset=${offset}, limit=${limit} for user: ${userId}`,
+      `[NiconicoClient] 収益データ取得: ${year}年${month}月, offset=${offset}, limit=${limit} for user: ${userId}`
     );
 
     const response = await this.request<NiconicoIncomeApiResponse>(apiUrl, {
@@ -238,7 +235,7 @@ export class NiconicoClient {
     userId: string,
     cookiesId: string,
     offset: number,
-    limit: number,
+    limit: number
   ): Promise<{
     contents: NiconicoMonthlyHistoryItem[];
     totalCount: number;
@@ -270,7 +267,7 @@ export class NiconicoClient {
     if (isAfterTwoMonthsAgo) {
       const limitMonth = String(twoMonthsAgoMonth).padStart(2, '0');
       throw new Error(
-        `月別履歴は2ヶ月前以前のデータのみ取得可能です。指定された期間: ${year}/${month} (制限: ${twoMonthsAgoYear}/${limitMonth}以前)`,
+        `月別履歴は2ヶ月前以前のデータのみ取得可能です。指定された期間: ${year}/${month} (制限: ${twoMonthsAgoYear}/${limitMonth}以前)`
       );
     }
 
@@ -278,7 +275,7 @@ export class NiconicoClient {
     const apiUrl = `${baseApiUrl}/${year}/${month}`;
 
     console.log(
-      `[NiconicoClient] 収益履歴データ取得: ${year}/${month}, offset=${offset}, limit=${limit} for user: ${userId}`,
+      `[NiconicoClient] 収益履歴データ取得: ${year}/${month}, offset=${offset}, limit=${limit} for user: ${userId}`
     );
 
     const response = await this.request<NiconicoMonthlyHistoryApiResponse>(apiUrl, {
@@ -308,7 +305,7 @@ export class NiconicoClient {
    */
   async fetchMylists(
     cookiesId: string,
-    sampleItemCount = 3,
+    sampleItemCount = 3
   ): Promise<{
     mylists: NiconicoMylist[];
   }> {
@@ -316,7 +313,7 @@ export class NiconicoClient {
 
     const response = await this.request<NiconicoMylistsApiResponse>(
       'https://nvapi.nicovideo.jp/v1/users/me/mylists',
-      { sampleItemCount },
+      { sampleItemCount }
     );
 
     if (response.meta.status !== 200) {
@@ -337,17 +334,17 @@ export class NiconicoClient {
     mylistId: string,
     cookiesId: string,
     page = 1,
-    pageSize = 100,
+    pageSize = 100
   ): Promise<{
     mylist: NiconicoMylistDetail;
   }> {
     console.log(
-      `[NiconicoClient] マイリスト詳細取得 mylistId=${mylistId}, page=${page}, pageSize=${pageSize}`,
+      `[NiconicoClient] マイリスト詳細取得 mylistId=${mylistId}, page=${page}, pageSize=${pageSize}`
     );
 
     const response = await this.request<NiconicoMylistDetailApiResponse>(
       `https://nvapi.nicovideo.jp/v1/users/me/mylists/${mylistId}`,
-      { page, pageSize },
+      { page, pageSize }
     );
 
     if (response.meta.status !== 200) {
@@ -357,7 +354,7 @@ export class NiconicoClient {
     const { mylist } = response.data;
 
     console.log(
-      `[NiconicoClient] マイリスト「${mylist.name}」: ${mylist.items.length}件取得 (全${mylist.totalItemCount}件中)`,
+      `[NiconicoClient] マイリスト「${mylist.name}」: ${mylist.items.length}件取得 (全${mylist.totalItemCount}件中)`
     );
 
     return { mylist };
@@ -373,9 +370,7 @@ export class NiconicoClient {
     };
 
     for (const videoId of videoIds) {
-      console.log(
-        `[NiconicoClient] マイリストに動画追加 mylistId=${mylistId}, videoId=${videoId}`,
-      );
+      console.log(`[NiconicoClient] マイリストに動画追加 mylistId=${mylistId}, videoId=${videoId}`);
 
       const url = `https://nvapi.nicovideo.jp/v1/users/me/mylists/${mylistId}/items?itemId=${videoId}`;
 
@@ -387,7 +382,7 @@ export class NiconicoClient {
         {
           headers,
           withCredentials: true,
-        },
+        }
       );
 
       console.log(`[NiconicoClient] 動画 ${videoId} をマイリストに追加しました`);
@@ -401,7 +396,7 @@ export class NiconicoClient {
     const itemIdsStr = itemIds.join(',');
 
     console.log(
-      `[NiconicoClient] マイリストから動画削除 mylistId=${mylistId}, itemIds=${itemIdsStr}`,
+      `[NiconicoClient] マイリストから動画削除 mylistId=${mylistId}, itemIds=${itemIdsStr}`
     );
 
     const url = `https://nvapi.nicovideo.jp/v1/users/me/mylists/${mylistId}/items?itemIds=${itemIdsStr}`;
@@ -428,12 +423,12 @@ export class NiconicoClient {
     videoId: string,
     from: string,
     to: string,
-    cookiesId: string,
+    cookiesId: string
   ): Promise<{
     stats: NiconicoAnalyticsStatsResponse[];
   }> {
     console.log(
-      `[NiconicoClient] アナリティクス統計データ取得 videoId=${videoId}, from=${from}, to=${to}`,
+      `[NiconicoClient] アナリティクス統計データ取得 videoId=${videoId}, from=${from}, to=${to}`
     );
 
     const url = 'https://nvapi.nicovideo.jp/v1/users/me/analytics/stats';
@@ -488,10 +483,7 @@ export class NiconicoClient {
   /**
    * HTTPリクエストを実行
    */
-  private async request<T>(
-    url: string,
-    params?: Record<string, unknown>,
-  ): Promise<T> {
+  private async request<T>(url: string, params?: Record<string, unknown>): Promise<T> {
     await this.enforceRateLimit();
 
     const cookieHeader = this.buildCookieHeader();
@@ -528,7 +520,7 @@ export class NiconicoClient {
   private setupInterceptors(): void {
     this.axios.interceptors.request.use(
       (config) => config,
-      (error) => Promise.reject(error),
+      (error) => Promise.reject(error)
     );
 
     this.axios.interceptors.response.use(
@@ -536,7 +528,7 @@ export class NiconicoClient {
       (error) => {
         console.error('[NiconicoClient] APIエラー:', error);
         return Promise.reject(this.handleError(error));
-      },
+      }
     );
   }
 
@@ -607,7 +599,7 @@ export class NiconicoClient {
   }
 
   private hasResponseProperty(
-    error: unknown,
+    error: unknown
   ): error is { response: { status: number; data: unknown } } {
     return typeof error === 'object' && error !== null && 'response' in error;
   }
@@ -634,7 +626,7 @@ export class NiconicoClient {
 
     const isCurrentMonthAvailable = await this.checkEarningsAvailability(
       requestedYear,
-      requestedMonth,
+      requestedMonth
     );
 
     if (isCurrentMonthAvailable) {
@@ -644,15 +636,12 @@ export class NiconicoClient {
 
     const previousMonth = this.getPreviousMonth(requestedYear, requestedMonth);
     console.log(
-      `${requestedYear}年${requestedMonth}月の収益データは集計中のため、前月 ${previousMonth.year}年${previousMonth.month}月のデータを取得します`,
+      `${requestedYear}年${requestedMonth}月の収益データは集計中のため、前月 ${previousMonth.year}年${previousMonth.month}月のデータを取得します`
     );
     return previousMonth;
   }
 
-  private async checkEarningsAvailability(
-    year: number,
-    month: number,
-  ): Promise<boolean> {
+  private async checkEarningsAvailability(year: number, month: number): Promise<boolean> {
     const baseApiUrl = 'https://public-api.commons.nicovideo.jp/v1/my/cpp/forecasts';
     const totalApiUrl = `${baseApiUrl}/total/${year}/${month}`;
 
@@ -667,7 +656,7 @@ export class NiconicoClient {
     });
 
     console.log(
-      `収益データ利用可能性チェック ${year}年${month}月: ステータス ${response.meta.status}`,
+      `収益データ利用可能性チェック ${year}年${month}月: ステータス ${response.meta.status}`
     );
 
     if (response.meta.status === 200) {
