@@ -96,7 +96,6 @@ export class NiconicoClient {
    */
   async fetchVideos(
     userId: string,
-    cookiesId: string,
     page: number,
     pageSize: number
   ): Promise<{
@@ -137,7 +136,6 @@ export class NiconicoClient {
    */
   async fetchLives(
     userId: string,
-    cookiesId: string,
     offset: number,
     limit: number
   ): Promise<{
@@ -188,7 +186,6 @@ export class NiconicoClient {
    */
   async fetchEarnings(
     userId: string,
-    cookiesId: string,
     offset: number,
     limit: number
   ): Promise<{
@@ -233,7 +230,6 @@ export class NiconicoClient {
   async fetchEarningsHistory(
     yearMonth: string,
     userId: string,
-    cookiesId: string,
     offset: number,
     limit: number
   ): Promise<{
@@ -303,10 +299,7 @@ export class NiconicoClient {
   /**
    * マイリスト一覧を取得
    */
-  async fetchMylists(
-    cookiesId: string,
-    sampleItemCount = 3
-  ): Promise<{
+  async fetchMylists(sampleItemCount = 3): Promise<{
     mylists: NiconicoMylist[];
   }> {
     console.log(`[NiconicoClient] マイリスト一覧取得 sampleItemCount=${sampleItemCount}`);
@@ -332,7 +325,6 @@ export class NiconicoClient {
    */
   async fetchMylistItems(
     mylistId: string,
-    cookiesId: string,
     page = 1,
     pageSize = 100
   ): Promise<{
@@ -363,7 +355,7 @@ export class NiconicoClient {
   /**
    * マイリストに動画を追加
    */
-  async addToMylist(mylistId: string, videoIds: string[], cookiesId: string): Promise<void> {
+  async addToMylist(mylistId: string, videoIds: string[]): Promise<void> {
     const cookieHeader = this.buildCookieHeader();
     const headers = {
       Cookie: cookieHeader,
@@ -392,7 +384,7 @@ export class NiconicoClient {
   /**
    * マイリストから動画を削除
    */
-  async removeFromMylist(mylistId: string, itemIds: number[], cookiesId: string): Promise<void> {
+  async removeFromMylist(mylistId: string, itemIds: number[]): Promise<void> {
     const itemIdsStr = itemIds.join(',');
 
     console.log(
@@ -422,8 +414,7 @@ export class NiconicoClient {
   async fetchAnalyticsStats(
     videoId: string,
     from: string,
-    to: string,
-    cookiesId: string
+    to: string
   ): Promise<{
     stats: NiconicoAnalyticsStatsResponse[];
   }> {
