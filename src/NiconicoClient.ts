@@ -1,6 +1,5 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig } from 'axios';
 import dayjs from 'dayjs';
-import type { INiconicoApiClient } from './INiconicoApiClient';
 import type {
   NiconicoAnalyticsStatsApiResponse,
   NiconicoAnalyticsStatsResponse,
@@ -66,7 +65,7 @@ export interface NiconicoClientConfig {
  * const videos = await client.fetchVideos('userId', 1, 10);
  * ```
  */
-export class NiconicoClient implements INiconicoApiClient {
+export class NiconicoClient {
   private readonly axios: AxiosInstance;
   private readonly baseURL = 'https://nvapi.nicovideo.jp/v2';
   private lastRequestTime = 0;
