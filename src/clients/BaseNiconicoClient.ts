@@ -28,7 +28,6 @@ export interface NiconicoApiResponse<T = unknown> {
 
 export abstract class BaseNiconicoClient {
   protected readonly axios: AxiosInstance;
-  protected readonly baseURL = 'https://nvapi.nicovideo.jp/v2';
   private lastRequestTime = 0;
   private readonly minRequestInterval: number;
   protected readonly cookies: NiconicoCookie[];
@@ -40,7 +39,6 @@ export abstract class BaseNiconicoClient {
     this.minRequestInterval = config.requestInterval || 1000;
 
     this.axios = axios.create({
-      baseURL: this.baseURL,
       timeout: 30000,
       headers: {
         'User-Agent': 'niconico-api-client/1.0.0',
@@ -73,6 +71,10 @@ export abstract class BaseNiconicoClient {
       skipStatusCheck = false,
     } = options || {};
 
+    if (!url.startsWith('http')) {
+      throw new Error(`BaseNiconicoClient now requires absolute URLs. Received: ${url}`);
+    }
+
     await this.enforceRateLimit();
 
     const cookieHeader = this.buildCookieHeader();
@@ -81,19 +83,14 @@ export abstract class BaseNiconicoClient {
       ...additionalHeaders,
     };
 
-    const isAbsoluteUrl = url.startsWith('http');
     const requestConfig: AxiosRequestConfig = {
       method,
-      url: isAbsoluteUrl ? url : `${this.baseURL}${url}`,
+      url,
       params,
       data,
       headers,
       withCredentials: true,
     };
-
-    if (isAbsoluteUrl) {
-      requestConfig.baseURL = undefined;
-    }
 
     console.log(`[BaseNiconicoClient] ${requestConfig.method?.toUpperCase()} ${requestConfig.url}`);
     if (requestConfig.params && Object.keys(requestConfig.params).length > 0) {

@@ -8,13 +8,14 @@ import type {
 import { BaseNiconicoClient } from './BaseNiconicoClient';
 
 export class NiconicoMylistClient extends BaseNiconicoClient {
+  private static readonly BASE_URL = 'https://nvapi.nicovideo.jp/v1';
   async fetchMylists(sampleItemCount = 3): Promise<{
     mylists: NiconicoMylist[];
   }> {
     console.log(`[NiconicoMylistClient] マイリスト一覧取得 sampleItemCount=${sampleItemCount}`);
 
     const response = await this.get<NiconicoMylistsApiResponse>(
-      'https://nvapi.nicovideo.jp/v1/users/me/mylists',
+      `${NiconicoMylistClient.BASE_URL}/users/me/mylists`,
       { sampleItemCount }
     );
 
@@ -37,7 +38,7 @@ export class NiconicoMylistClient extends BaseNiconicoClient {
     );
 
     const response = await this.get<NiconicoMylistDetailApiResponse>(
-      `https://nvapi.nicovideo.jp/v1/users/me/mylists/${mylistId}`,
+      `${NiconicoMylistClient.BASE_URL}/users/me/mylists/${mylistId}`,
       { page, pageSize }
     );
 
@@ -56,7 +57,7 @@ export class NiconicoMylistClient extends BaseNiconicoClient {
         `[NiconicoMylistClient] マイリストに動画追加 mylistId=${mylistId}, videoId=${videoId}`
       );
 
-      const url = `https://nvapi.nicovideo.jp/v1/users/me/mylists/${mylistId}/items?itemId=${videoId}`;
+      const url = `${NiconicoMylistClient.BASE_URL}/users/me/mylists/${mylistId}/items?itemId=${videoId}`;
 
       await this.post<NiconicoMylistOperationApiResponse>(url, {});
 
@@ -71,7 +72,7 @@ export class NiconicoMylistClient extends BaseNiconicoClient {
       `[NiconicoMylistClient] マイリストから動画削除 mylistId=${mylistId}, itemIds=${itemIdsStr}`
     );
 
-    const url = `https://nvapi.nicovideo.jp/v1/users/me/mylists/${mylistId}/items`;
+    const url = `${NiconicoMylistClient.BASE_URL}/users/me/mylists/${mylistId}/items`;
 
     await this.delete<NiconicoMylistOperationApiResponse>(url, { itemIds: itemIdsStr });
 

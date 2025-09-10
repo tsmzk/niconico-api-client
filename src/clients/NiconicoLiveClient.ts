@@ -5,6 +5,7 @@ import type {
 import { BaseNiconicoClient } from './BaseNiconicoClient';
 
 export class NiconicoLiveClient extends BaseNiconicoClient {
+  private static readonly BASE_URL = 'https://live.nicovideo.jp/front/api/v2';
   async fetchLives(
     userId: string,
     offset: number,
@@ -30,7 +31,7 @@ export class NiconicoLiveClient extends BaseNiconicoClient {
     };
 
     const response = await this.get<NiconicoLiveBroadcastApiResponse>(
-      'https://live.nicovideo.jp/front/api/v2/user-broadcast-history',
+      `${NiconicoLiveClient.BASE_URL}/user-broadcast-history`,
       apiParams
     );
 

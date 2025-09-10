@@ -5,6 +5,7 @@ import type {
 import { BaseNiconicoClient } from './BaseNiconicoClient';
 
 export class NiconicoAnalyticsClient extends BaseNiconicoClient {
+  private static readonly BASE_URL = 'https://nvapi.nicovideo.jp/v1';
   async fetchAnalyticsStats(
     videoId: string,
     from: string,
@@ -16,7 +17,7 @@ export class NiconicoAnalyticsClient extends BaseNiconicoClient {
       `[NiconicoAnalyticsClient] アナリティクス統計データ取得 videoId=${videoId}, from=${from}, to=${to}`
     );
 
-    const url = 'https://nvapi.nicovideo.jp/v1/users/me/analytics/stats';
+    const url = `${NiconicoAnalyticsClient.BASE_URL}/users/me/analytics/stats`;
     const params = {
       from,
       to,

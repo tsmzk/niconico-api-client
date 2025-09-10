@@ -11,6 +11,7 @@ import type {
 import { BaseNiconicoClient } from './BaseNiconicoClient';
 
 export class NiconicoIncomeClient extends BaseNiconicoClient {
+  private static readonly BASE_URL = 'https://public-api.commons.nicovideo.jp/v1/my/cpp';
   async fetchEarnings(
     userId: string,
     offset: number,
@@ -21,8 +22,7 @@ export class NiconicoIncomeClient extends BaseNiconicoClient {
     hasMore: boolean;
   }> {
     const { year, month } = await this.determineTargetYearMonth();
-    const baseApiUrl = 'https://public-api.commons.nicovideo.jp/v1/my/cpp/forecasts';
-    const apiUrl = `${baseApiUrl}/${year}/${month}`;
+    const apiUrl = `${NiconicoIncomeClient.BASE_URL}/forecasts/${year}/${month}`;
 
     console.log(
       `[NiconicoIncomeClient] 収益データ取得: ${year}年${month}月, offset=${offset}, limit=${limit} for user: ${userId}`
@@ -89,8 +89,7 @@ export class NiconicoIncomeClient extends BaseNiconicoClient {
       );
     }
 
-    const baseApiUrl = 'https://public-api.commons.nicovideo.jp/v1/my/cpp/histories';
-    const apiUrl = `${baseApiUrl}/${year}/${month}`;
+    const apiUrl = `${NiconicoIncomeClient.BASE_URL}/histories/${year}/${month}`;
 
     console.log(
       `[NiconicoIncomeClient] 収益履歴データ取得: ${year}/${month}, offset=${offset}, limit=${limit} for user: ${userId}`
@@ -139,8 +138,7 @@ export class NiconicoIncomeClient extends BaseNiconicoClient {
   }
 
   private async checkEarningsAvailability(year: number, month: number): Promise<boolean> {
-    const baseApiUrl = 'https://public-api.commons.nicovideo.jp/v1/my/cpp/forecasts';
-    const totalApiUrl = `${baseApiUrl}/total/${year}/${month}`;
+    const totalApiUrl = `${NiconicoIncomeClient.BASE_URL}/forecasts/total/${year}/${month}`;
 
     try {
       const response = await this.requestWithSpecialHandling<NiconicoIncomeTotalResponse>(
