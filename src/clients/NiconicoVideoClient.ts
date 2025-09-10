@@ -1,8 +1,21 @@
+import type { NiconicoClientConfig } from '../types/common';
 import type { NiconicoVideoApiResponse, NiconicoVideoItem } from '../types/NiconicoVideoApiTypes';
-import { BaseNiconicoClient } from './BaseNiconicoClient';
+import { HttpClient } from '../utils/httpClient';
+import { RateLimiter } from '../utils/rateLimiter';
 
-export class NiconicoVideoClient extends BaseNiconicoClient {
+export class NiconicoVideoClient {
   private static readonly BASE_URL = 'https://nvapi.nicovideo.jp/v2';
+  private readonly httpClient: HttpClient;
+  private readonly rateLimiter: RateLimiter;
+
+  constructor(config: NiconicoClientConfig) {
+    this.httpClient = new HttpClient({
+      cookies: config.cookies,
+      timeout: 30000,
+    });
+    this.rateLimiter = new RateLimiter(config.requestInterval);
+  }
+
   async fetchVideos(
     userId: string,
     page: number,
@@ -16,7 +29,9 @@ export class NiconicoVideoClient extends BaseNiconicoClient {
       `[NiconicoVideoClient] 動画データ取得 page=${page}, pageSize=${pageSize} for user: ${userId}`
     );
 
-    const response = await this.get<NiconicoVideoApiResponse>(
+    await this.rateLimiter.enforce();
+
+    const response = await this.httpClient.get<NiconicoVideoApiResponse>(
       `${NiconicoVideoClient.BASE_URL}/users/me/videos`,
       {
         sortKey: 'registeredAt',

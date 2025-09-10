@@ -1,11 +1,25 @@
+import type { NiconicoClientConfig } from '../types/common';
 import type {
   NiconicoLiveBroadcastApiResponse,
   NiconicoLiveProgramData,
 } from '../types/NiconicoLiveApiTypes';
-import { BaseNiconicoClient } from './BaseNiconicoClient';
+import { HttpClient } from '../utils/httpClient';
+import { RateLimiter } from '../utils/rateLimiter';
 
-export class NiconicoLiveClient extends BaseNiconicoClient {
+export class NiconicoLiveClient {
   private static readonly BASE_URL = 'https://live.nicovideo.jp/front/api/v2';
+  private readonly httpClient: HttpClient;
+  private readonly rateLimiter: RateLimiter;
+  private readonly userId?: string;
+
+  constructor(config: NiconicoClientConfig) {
+    this.httpClient = new HttpClient({
+      cookies: config.cookies,
+      timeout: 30000,
+    });
+    this.rateLimiter = new RateLimiter(config.requestInterval);
+    this.userId = config.userId;
+  }
   async fetchLives(
     userId: string,
     offset: number,
@@ -21,6 +35,8 @@ export class NiconicoLiveClient extends BaseNiconicoClient {
       `[NiconicoLiveClient] 生放送データ取得 offset=${offset}, limit=${limit} for user: ${userId}`
     );
 
+    await this.rateLimiter.enforce();
+
     const apiParams = {
       providerId: actualUserId,
       providerType: 'user',
@@ -30,7 +46,7 @@ export class NiconicoLiveClient extends BaseNiconicoClient {
       withTotalCount: true,
     };
 
-    const response = await this.get<NiconicoLiveBroadcastApiResponse>(
+    const response = await this.httpClient.get<NiconicoLiveBroadcastApiResponse>(
       `${NiconicoLiveClient.BASE_URL}/user-broadcast-history`,
       apiParams
     );

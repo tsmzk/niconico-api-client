@@ -1,3 +1,4 @@
+import type { NiconicoClientConfig } from '../types/common';
 import type {
   NiconicoMylist,
   NiconicoMylistDetail,
@@ -5,16 +6,29 @@ import type {
   NiconicoMylistOperationApiResponse,
   NiconicoMylistsApiResponse,
 } from '../types/NiconicoMylistApiTypes';
-import { BaseNiconicoClient } from './BaseNiconicoClient';
+import { HttpClient } from '../utils/httpClient';
+import { RateLimiter } from '../utils/rateLimiter';
 
-export class NiconicoMylistClient extends BaseNiconicoClient {
+export class NiconicoMylistClient {
   private static readonly BASE_URL = 'https://nvapi.nicovideo.jp/v1';
+  private readonly httpClient: HttpClient;
+  private readonly rateLimiter: RateLimiter;
+
+  constructor(config: NiconicoClientConfig) {
+    this.httpClient = new HttpClient({
+      cookies: config.cookies,
+      timeout: 30000,
+    });
+    this.rateLimiter = new RateLimiter(config.requestInterval);
+  }
   async fetchMylists(sampleItemCount = 3): Promise<{
     mylists: NiconicoMylist[];
   }> {
     console.log(`[NiconicoMylistClient] マイリスト一覧取得 sampleItemCount=${sampleItemCount}`);
 
-    const response = await this.get<NiconicoMylistsApiResponse>(
+    await this.rateLimiter.enforce();
+
+    const response = await this.httpClient.get<NiconicoMylistsApiResponse>(
       `${NiconicoMylistClient.BASE_URL}/users/me/mylists`,
       { sampleItemCount }
     );
@@ -37,7 +51,9 @@ export class NiconicoMylistClient extends BaseNiconicoClient {
       `[NiconicoMylistClient] マイリスト詳細取得 mylistId=${mylistId}, page=${page}, pageSize=${pageSize}`
     );
 
-    const response = await this.get<NiconicoMylistDetailApiResponse>(
+    await this.rateLimiter.enforce();
+
+    const response = await this.httpClient.get<NiconicoMylistDetailApiResponse>(
       `${NiconicoMylistClient.BASE_URL}/users/me/mylists/${mylistId}`,
       { page, pageSize }
     );
@@ -57,9 +73,11 @@ export class NiconicoMylistClient extends BaseNiconicoClient {
         `[NiconicoMylistClient] マイリストに動画追加 mylistId=${mylistId}, videoId=${videoId}`
       );
 
+      await this.rateLimiter.enforce();
+
       const url = `${NiconicoMylistClient.BASE_URL}/users/me/mylists/${mylistId}/items?itemId=${videoId}`;
 
-      await this.post<NiconicoMylistOperationApiResponse>(url, {});
+      await this.httpClient.post<NiconicoMylistOperationApiResponse>(url, {});
 
       console.log(`[NiconicoMylistClient] 動画 ${videoId} をマイリストに追加しました`);
     }
@@ -72,9 +90,11 @@ export class NiconicoMylistClient extends BaseNiconicoClient {
       `[NiconicoMylistClient] マイリストから動画削除 mylistId=${mylistId}, itemIds=${itemIdsStr}`
     );
 
+    await this.rateLimiter.enforce();
+
     const url = `${NiconicoMylistClient.BASE_URL}/users/me/mylists/${mylistId}/items`;
 
-    await this.delete<NiconicoMylistOperationApiResponse>(url, { itemIds: itemIdsStr });
+    await this.httpClient.delete<NiconicoMylistOperationApiResponse>(url, { itemIds: itemIdsStr });
 
     console.log(`[NiconicoMylistClient] アイテム ${itemIdsStr} をマイリストから削除しました`);
   }

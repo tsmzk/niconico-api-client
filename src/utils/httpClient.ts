@@ -1,45 +1,21 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig } from 'axios';
+import type { NiconicoApiResponse, NiconicoCookie } from '../types/common';
 
-export type NiconicoCookie = {
-  name: string;
-  value: string;
-  domain: string;
-  path: string;
-  expires?: number;
-  httpOnly?: boolean;
-  secure?: boolean;
-  sameSite?: 'Strict' | 'Lax' | 'None';
-};
-
-export interface BaseNiconicoClientConfig {
+export interface HttpClientOptions {
   cookies: NiconicoCookie[];
-  userId?: string;
-  requestInterval?: number;
+  timeout?: number;
+  headers?: Record<string, string>;
 }
 
-export interface NiconicoApiResponse<T = unknown> {
-  meta: {
-    status: number;
-    errorCode?: string;
-    errorMessage?: string;
-  };
-  data: T;
-}
+export class HttpClient {
+  private readonly axios: AxiosInstance;
+  private readonly cookies: NiconicoCookie[];
 
-export abstract class BaseNiconicoClient {
-  protected readonly axios: AxiosInstance;
-  private lastRequestTime = 0;
-  private readonly minRequestInterval: number;
-  protected readonly cookies: NiconicoCookie[];
-  protected readonly userId?: string;
-
-  constructor(config: BaseNiconicoClientConfig) {
-    this.cookies = config.cookies;
-    this.userId = config.userId;
-    this.minRequestInterval = config.requestInterval || 1000;
+  constructor(options: HttpClientOptions) {
+    this.cookies = options.cookies;
 
     this.axios = axios.create({
-      timeout: 30000,
+      timeout: options.timeout || 30000,
       headers: {
         'User-Agent': 'niconico-api-client/1.0.0',
         'x-frontend-id': '23',
@@ -47,13 +23,14 @@ export abstract class BaseNiconicoClient {
         Accept: 'application/json',
         'Accept-Language': 'ja,en;q=0.9',
         'Cache-Control': 'no-cache',
+        ...options.headers,
       },
     });
 
     this.setupInterceptors();
   }
 
-  protected async request<T>(
+  async request<T>(
     url: string,
     options?: {
       method?: 'GET' | 'POST' | 'DELETE';
@@ -72,10 +49,8 @@ export abstract class BaseNiconicoClient {
     } = options || {};
 
     if (!url.startsWith('http')) {
-      throw new Error(`BaseNiconicoClient now requires absolute URLs. Received: ${url}`);
+      throw new Error(`HttpClient now requires absolute URLs. Received: ${url}`);
     }
-
-    await this.enforceRateLimit();
 
     const cookieHeader = this.buildCookieHeader();
     const headers = {
@@ -92,18 +67,17 @@ export abstract class BaseNiconicoClient {
       withCredentials: true,
     };
 
-    console.log(`[BaseNiconicoClient] ${requestConfig.method?.toUpperCase()} ${requestConfig.url}`);
+    console.log(`[HttpClient] ${requestConfig.method?.toUpperCase()} ${requestConfig.url}`);
     if (requestConfig.params && Object.keys(requestConfig.params).length > 0) {
-      console.log(`[BaseNiconicoClient] パラメータ:`, requestConfig.params);
+      console.log(`[HttpClient] パラメータ:`, requestConfig.params);
     }
     if (requestConfig.data) {
-      console.log(`[BaseNiconicoClient] データ:`, requestConfig.data);
+      console.log(`[HttpClient] データ:`, requestConfig.data);
     }
 
     const response = await this.axios.request<T>(requestConfig);
-    console.log('[BaseNiconicoClient] レスポンス成功 - ステータス:', response.status);
+    console.log('[HttpClient] レスポンス成功 - ステータス:', response.status);
 
-    // 自動ステータスチェック
     if (!skipStatusCheck && this.hasMetaProperty(response.data)) {
       this.checkMetaStatus(response.data.meta);
     }
@@ -111,13 +85,12 @@ export abstract class BaseNiconicoClient {
     return response.data;
   }
 
-  // 型安全性を向上させた便利メソッド（データ部分を自動抽出）
-  protected async get<T>(url: string, params?: Record<string, unknown>): Promise<T> {
+  async get<T>(url: string, params?: Record<string, unknown>): Promise<T> {
     const response = await this.request<NiconicoApiResponse<T>>(url, { method: 'GET', params });
     return response.data;
   }
 
-  protected async post<T>(
+  async post<T>(
     url: string,
     data?: unknown,
     additionalHeaders?: Record<string, string>
@@ -130,7 +103,7 @@ export abstract class BaseNiconicoClient {
     return response.data;
   }
 
-  protected async delete<T>(
+  async delete<T>(
     url: string,
     params?: Record<string, unknown>,
     additionalHeaders?: Record<string, string>
@@ -143,8 +116,7 @@ export abstract class BaseNiconicoClient {
     return response.data;
   }
 
-  // 特殊ケース対応用のメソッド
-  protected async requestWithSpecialHandling<T>(
+  async requestWithSpecialHandling<T>(
     url: string,
     options?: {
       method?: 'GET' | 'POST' | 'DELETE';
@@ -182,26 +154,14 @@ export abstract class BaseNiconicoClient {
     this.axios.interceptors.response.use(
       (response) => response,
       (error) => {
-        console.error('[BaseNiconicoClient] APIエラー:', error);
+        console.error('[HttpClient] APIエラー:', error);
         return Promise.reject(this.handleError(error));
       }
     );
   }
 
-  protected buildCookieHeader(): string {
+  private buildCookieHeader(): string {
     return this.cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join('; ');
-  }
-
-  protected async enforceRateLimit(): Promise<void> {
-    const now = Date.now();
-    const timeSinceLastRequest = now - this.lastRequestTime;
-
-    if (timeSinceLastRequest < this.minRequestInterval) {
-      const waitTime = this.minRequestInterval - timeSinceLastRequest;
-      await new Promise((resolve) => setTimeout(resolve, waitTime));
-    }
-
-    this.lastRequestTime = Date.now();
   }
 
   private handleError(error: unknown): Error {
@@ -218,7 +178,7 @@ export abstract class BaseNiconicoClient {
       }
       if (status === 403) {
         const errorMessage = this.extractErrorMessage(data);
-        console.error(`[BaseNiconicoClient] 403エラー: ${errorMessage}`);
+        console.error(`[HttpClient] 403エラー: ${errorMessage}`);
         return new Error(`アクセス拒否 (403): ${errorMessage}`);
       }
       if (status === 404) {

@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import type { NiconicoClientConfig } from '../types/common';
 import type {
   NiconicoIncomeApiResponse,
   NiconicoIncomeContent,
@@ -8,10 +9,21 @@ import type {
   NiconicoMonthlyHistoryApiResponse,
   NiconicoMonthlyHistoryItem,
 } from '../types/NiconicoMonthlyHistoryApiTypes';
-import { BaseNiconicoClient } from './BaseNiconicoClient';
+import { HttpClient } from '../utils/httpClient';
+import { RateLimiter } from '../utils/rateLimiter';
 
-export class NiconicoIncomeClient extends BaseNiconicoClient {
+export class NiconicoIncomeClient {
   private static readonly BASE_URL = 'https://public-api.commons.nicovideo.jp/v1/my/cpp';
+  private readonly httpClient: HttpClient;
+  private readonly rateLimiter: RateLimiter;
+
+  constructor(config: NiconicoClientConfig) {
+    this.httpClient = new HttpClient({
+      cookies: config.cookies,
+      timeout: 30000,
+    });
+    this.rateLimiter = new RateLimiter(config.requestInterval);
+  }
   async fetchEarnings(
     userId: string,
     offset: number,
@@ -28,7 +40,9 @@ export class NiconicoIncomeClient extends BaseNiconicoClient {
       `[NiconicoIncomeClient] 収益データ取得: ${year}年${month}月, offset=${offset}, limit=${limit} for user: ${userId}`
     );
 
-    const response = await this.get<NiconicoIncomeApiResponse>(apiUrl, {
+    await this.rateLimiter.enforce();
+
+    const response = await this.httpClient.get<NiconicoIncomeApiResponse>(apiUrl, {
       _offset: offset,
       _limit: limit,
       _sort: '-createdAt',
@@ -95,7 +109,9 @@ export class NiconicoIncomeClient extends BaseNiconicoClient {
       `[NiconicoIncomeClient] 収益履歴データ取得: ${year}/${month}, offset=${offset}, limit=${limit} for user: ${userId}`
     );
 
-    const response = await this.get<NiconicoMonthlyHistoryApiResponse>(apiUrl, {
+    await this.rateLimiter.enforce();
+
+    const response = await this.httpClient.get<NiconicoMonthlyHistoryApiResponse>(apiUrl, {
       _offset: offset,
       _limit: limit,
       _sort: '-score.thisMonth.allTotal',
@@ -141,13 +157,13 @@ export class NiconicoIncomeClient extends BaseNiconicoClient {
     const totalApiUrl = `${NiconicoIncomeClient.BASE_URL}/forecasts/total/${year}/${month}`;
 
     try {
-      const response = await this.requestWithSpecialHandling<NiconicoIncomeTotalResponse>(
-        totalApiUrl,
-        {
+      await this.rateLimiter.enforce();
+
+      const response =
+        await this.httpClient.requestWithSpecialHandling<NiconicoIncomeTotalResponse>(totalApiUrl, {
           method: 'GET',
           params: { _limit: 1 },
-        }
-      );
+        });
 
       // 手動でステータスチェック（409も含めて）
       if (this.hasMetaStatus(response)) {

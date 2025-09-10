@@ -1,9 +1,9 @@
-import type { BaseNiconicoClientConfig, NiconicoCookie } from './clients/BaseNiconicoClient';
 import { NiconicoAnalyticsClient } from './clients/NiconicoAnalyticsClient';
 import { NiconicoIncomeClient } from './clients/NiconicoIncomeClient';
 import { NiconicoLiveClient } from './clients/NiconicoLiveClient';
 import { NiconicoMylistClient } from './clients/NiconicoMylistClient';
 import { NiconicoVideoClient } from './clients/NiconicoVideoClient';
+import type { NiconicoClientConfig, NiconicoCookie } from './types/common';
 
 import type { NiconicoAnalyticsStatsResponse } from './types/NiconicoAnalyticsStatsApiTypes';
 import type { NiconicoIncomeContent } from './types/NiconicoIncomeApiTypes';
@@ -14,7 +14,7 @@ import type { NiconicoVideoItem } from './types/NiconicoVideoApiTypes';
 
 export type { NiconicoCookie };
 
-export interface NiconicoApiClientConfig extends BaseNiconicoClientConfig {}
+export interface NiconicoApiClientConfig extends NiconicoClientConfig {}
 
 /**
  * ニコニコAPIクライアント（ファサードパターン）

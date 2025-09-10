@@ -1,11 +1,24 @@
+import type { NiconicoClientConfig } from '../types/common';
 import type {
   NiconicoAnalyticsStatsApiResponse,
   NiconicoAnalyticsStatsResponse,
 } from '../types/NiconicoAnalyticsStatsApiTypes';
-import { BaseNiconicoClient } from './BaseNiconicoClient';
+import { HttpClient } from '../utils/httpClient';
+import { RateLimiter } from '../utils/rateLimiter';
 
-export class NiconicoAnalyticsClient extends BaseNiconicoClient {
+export class NiconicoAnalyticsClient {
   private static readonly BASE_URL = 'https://nvapi.nicovideo.jp/v1';
+  private readonly httpClient: HttpClient;
+  private readonly rateLimiter: RateLimiter;
+
+  constructor(config: NiconicoClientConfig) {
+    this.httpClient = new HttpClient({
+      cookies: config.cookies,
+      timeout: 30000,
+    });
+    this.rateLimiter = new RateLimiter(config.requestInterval);
+  }
+
   async fetchAnalyticsStats(
     videoId: string,
     from: string,
@@ -17,6 +30,8 @@ export class NiconicoAnalyticsClient extends BaseNiconicoClient {
       `[NiconicoAnalyticsClient] アナリティクス統計データ取得 videoId=${videoId}, from=${from}, to=${to}`
     );
 
+    await this.rateLimiter.enforce();
+
     const url = `${NiconicoAnalyticsClient.BASE_URL}/users/me/analytics/stats`;
     const params = {
       from,
@@ -27,7 +42,7 @@ export class NiconicoAnalyticsClient extends BaseNiconicoClient {
       dimensions: 'date',
     };
 
-    const response = await this.get<NiconicoAnalyticsStatsApiResponse>(url, params);
+    const response = await this.httpClient.get<NiconicoAnalyticsStatsApiResponse>(url, params);
 
     const stats: NiconicoAnalyticsStatsResponse[] = response.data.map((item) => {
       const date = item.dimensions.find((d) => d.type === 'date')?.label;
